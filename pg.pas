@@ -1,6 +1,6 @@
 //fpc 3.0.0
 
-program HelloWorld;
+program Pdecryptor;
 
 type encryptionKey = array [1..26] of char;
 type letterFrequency = array [1..27] of integer; //27 - number of letters (not counting spaces etc.)
