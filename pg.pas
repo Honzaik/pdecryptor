@@ -5,9 +5,16 @@ type freq = record
         letter : char;
         eLetter : char
 end;
+
+type usedWord = record
+        value : string;
+        pos : integer
+end;
+
 type encryptionKey = array [1..26] of char;
 type letterFrequency = array [1..27] of integer; //27 - number of letters (not counting spaces etc.)
 type candidateArray = array [1..9] of char;
+type words = array [1..20000] of usedWord;
 
 const DEFAULT_BAR = 20;
 
@@ -18,6 +25,7 @@ var letters, bLetters, eLetters, aLetters : letterFrequency;
 var i : byte;
 var ss, encryptedSs : string;
 var readF, writeF : text;
+var mostWords : words;
 
 procedure generateKey(var key : encryptionKey);
 var i, newPos : byte;
@@ -148,6 +156,64 @@ begin
     for i := 1 to 26 do writeln('#', i, ' ', tempA[i].letter, '(', tempA[i].eLetter ,') ', tempA[i].perc:5:2, ' %');
 end;
 
+procedure saveWords(s : string);
+var f : text;
+var temp : string;
+var c : char;
+var i : longint;
+begin
+        assign(f, 'slova.txt');
+        rewrite(f);
+        temp := '';
+        for i:=1 to length(s) do
+        begin
+                c := LowerCase(s[i]);
+                if((c >= 'a') and (c <= 'z')) then temp := temp + c
+                else
+                begin
+                        if(length(temp) > 0) then writeln(f, temp);
+                        temp := '';
+                end;
+        end;
+        close(f);
+end;
+{s1>s2 <=> lexComp(s1,s2)}
+function lexComp(s1, s2 : string) : boolean;
+var i : byte;
+begin
+        if(length(s1) > length(s2)) then lexComp := true
+        else
+        begin
+                if(length(s1) < length(s2)) then lexComp := false
+                else
+                begin
+                        for i:=1 to length(s1) do
+                        begin
+                                if(s1[i] > s2[i]) then
+                                begin
+                                        lexComp := true;
+                                        break;
+                                end
+                                else
+                                begin
+                                        if(s1[i] < s2[i]) then
+                                        begin
+                                                lexComp := false;
+                                                break;
+                                        end;
+                                end
+                        end;
+                end;
+        end;
+end;
+
+procedure loadWords();
+var f : text;
+begin
+        assign/
+        while not
+end;
+
 begin
     generateKey(eKey);
     for i:=1 to 26 do write(eKey[i]);
@@ -161,10 +227,12 @@ begin
         readln(readF, encryptedSs);
         ss := ss + encryptedSs;
     end;
+
     writeln(ss);
     writeln(length(ss));
     encryptedSs := encryptString(ss, eKey);
     writeln(encryptedSs);
+    saveWords(encryptedSs);
     setLetterFrequency(letters, bLetters, eLetters, aLetters, encryptedSs);
     writeln('Number of letters: ', letters[27]);
     for i:=1 to 26 do
