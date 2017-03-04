@@ -1,4 +1,4 @@
-program Pdecryptor;
+program pdecryptor;
 {$H+}
 type freq = record
         perc : real;
@@ -22,7 +22,7 @@ var eKey : encryptionKey = ('a','b','c','d','e','f','g','h','i','j','k','l','m',
 var rankedLetter : candidateArray = ('e','t','a','o','i','n','s','h','r');
 var frequencies : encryptionKey = ('a', 'i', 'e', 't', 's', 'n', 'o', 'd', 'h', 'r', 'l', 'f', 'm', 'c', 'g', 'y', 'u', 'w', 'p', 'b', 'k', 'v', 'j', 'q', 'x', 'z');
 var letters, bLetters, eLetters, aLetters : letterFrequency;
-var i : byte;
+var i : integer;
 var ss, encryptedSs : string;
 var readF, writeF : text;
 var mostWords : words;
@@ -177,6 +177,25 @@ begin
         end;
         close(f);
 end;
+
+procedure loadMostWords();
+var f : text;
+var i : integer;
+var temp : string;
+begin
+        assign(f, '20k.txt');
+        reset(f);
+        i := 1;
+        while not eof(f) do
+        begin
+            readln(f, temp);
+            mostWords[i].value := temp;
+            mostWords[i].pos := i;
+            i := i + 1;
+        end;
+        close(f);
+end;
+
 {s1>s2 <=> lexComp(s1,s2)}
 function lexComp(s1, s2 : string) : boolean;
 var i : byte;
@@ -194,27 +213,62 @@ begin
                                         lexComp := true;
                                         break;
                                 end
-                                else
+                                else if (s1[i] < s2[i]) then
                                 begin
-                                        if(s1[i] < s2[i]) then
-                                        begin
-                                                lexComp := false;
-                                                break;
-                                        end;
-                                end
+                                     lexComp := false;
+                                     break;
+                                end;
+                                lexComp := false;
                         end;
+
                 end;
         end;
 end;
 
-procedure loadWords();
-var f : text;
+procedure sortMostWords(var ar : words; start, konec : integer); {quicksort lexikograficky}
+var pivot, temp : usedWord;
+var s, e : integer; {start end}
 begin
-        assign/
-        while not
+    s := start;
+    e := konec;
+    pivot := ar[(start + konec) div 2];
+    repeat
+        while lexComp(pivot.value, ar[s].value) do s := s + 1;
+        while lexComp(ar[e].value, pivot.value) do e := e - 1;
+        if(s < e) then
+        begin
+            temp := ar[s];
+            ar[s] := ar[e];
+            ar[e] := temp;
+            s := s + 1;
+            e := e - 1;
+        end
+        else if (s = e) then
+        begin
+            s := s + 1;
+            e := e - 1;
+        end;
+    until s > e;
+    if(start < e) then sortMostWords(ar, start, e);
+    if(konec > s) then sortMostWords(ar, s, konec);
+end;
+
+function isInMostWords(s : string) : boolean;
+var i, j, k : integer;
+begin
+    i := 1;
+    j := length(mostWords);
+    repeat
+          k := (i+j) div 2;
+          if(lexComp(s, mostWords[k].value)) then i := k+1
+          else j := k-1;
+    until (mostWords[k].value = s) or (i > j);
+    if(mostWords[k].value = s) then isInMostWords := true
+    else isInMostWords := false;
 end;
 
 begin
+    {
     generateKey(eKey);
     for i:=1 to 26 do write(eKey[i]);
     writeln();
@@ -243,4 +297,13 @@ begin
     end;
     sumUpFrequencies(letters, bLetters, eLetters, aLetters, eKey);
    // getCandidates(letters);
+    }
+    loadMostWords();
+    sortMostWords(mostWords, 1, length(mostWords));
+    assign(writeF, 'output.txt');
+    rewrite(writeF);
+    for i:=1 to length(mostWords) do writeln(writeF, mostWords[i].value);
+    close(writeF);
+    writeln(isInMostWords('honzaik'));
+    writeln(isInMostWords('dick'));
 end.
