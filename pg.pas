@@ -8,13 +8,13 @@ end;
 
 type usedWord = record
         value : string;
-        pos : integer
+        pos : longint
 end;
 
 type encryptionKey = array [1..26] of char;
 type letterFrequency = array [1..27] of integer; //27 - number of letters (not counting spaces etc.)
 type candidateArray = array [1..9] of char;
-type words = array [1..20000] of usedWord;
+type words = array [1..35815] of usedWord;
 
 const DEFAULT_BAR = 20;
 
@@ -22,7 +22,7 @@ var eKey : encryptionKey = ('a','b','c','d','e','f','g','h','i','j','k','l','m',
 var rankedLetter : candidateArray = ('e','t','a','o','i','n','s','h','r');
 var frequencies : encryptionKey = ('a', 'i', 'e', 't', 's', 'n', 'o', 'd', 'h', 'r', 'l', 'f', 'm', 'c', 'g', 'y', 'u', 'w', 'p', 'b', 'k', 'v', 'j', 'q', 'x', 'z');
 var letters, bLetters, eLetters, aLetters : letterFrequency;
-var i : integer;
+var i : longint;
 var ss, encryptedSs : string;
 var readF, writeF : text;
 var mostWords : words;
@@ -180,13 +180,13 @@ end;
 
 procedure loadMostWords();
 var f : text;
-var i : integer;
+var i : longint;
 var temp : string;
 begin
-        assign(f, '20k.txt');
+        assign(f, '50k.txt');
         reset(f);
         i := 1;
-        while not eof(f) do
+        while not SeekEof(f) do
         begin
             readln(f, temp);
             mostWords[i].value := temp;
@@ -225,9 +225,9 @@ begin
         end;
 end;
 
-procedure sortMostWords(var ar : words; start, konec : integer); {quicksort lexikograficky}
+procedure sortMostWords(var ar : words; start, konec : longint); {quicksort lexikograficky}
 var pivot, temp : usedWord;
-var s, e : integer; {start end}
+var s, e : longint; {start end}
 begin
     s := start;
     e := konec;
@@ -254,7 +254,7 @@ begin
 end;
 
 function isInMostWords(s : string) : boolean;
-var i, j, k : integer;
+var i, j, k : longint;
 begin
     i := 1;
     j := length(mostWords);
