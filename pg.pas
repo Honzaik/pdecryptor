@@ -14,13 +14,9 @@ end;
 type encryptionKey = array [1..26] of char;
 type letterFrequency = array [1..27] of integer; //27 - number of letters (not counting spaces etc.)
 type candidateArray = array [1..9] of char;
-<<<<<<< HEAD
 type words = array [1..5000] of usedWord;
 type wordsArray = array[1..5000] of string;
 type permutation = array[1..26] of byte;
-=======
-type words = array [1..35815] of usedWord;
->>>>>>> 90a921968ac2cec291814d30ca6c75f965115216
 
 const DEFAULT_BAR = 20;
 
