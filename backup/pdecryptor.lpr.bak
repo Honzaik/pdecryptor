@@ -456,16 +456,16 @@ begin
     for i:=1 to 26 do write(currentPerm[i].value, ' ');
     writeln();
     fitness := 0;
-    while triedPerms < 20000 do
+    while fitness < 40 do
     begin
        lastPerm := currentPerm;
-       //s := decryptString(encryptedString, lastPerm);
-       //saveWords(s);               od 1/10 zhruba pomalejší
-       setDecryptedWords(lastPerm);
+       s := decryptString(encryptedString, lastPerm);
+       saveWords(s);
+       //setDecryptedWords(lastPerm);
        fitness := getNumberOfGoodWords(encryptedWords, false);
        setNewPerm();
        //triedPerms := triedPerms + 1;
-       //writeln(triedPerms);
+       writeln(triedPerms);
     end;
     writeln('KEY ', fitness);
 
