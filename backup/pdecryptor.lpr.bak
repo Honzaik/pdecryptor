@@ -20,6 +20,11 @@ type permItem = record
 
 end;
 
+type bigram = record
+        count : integer;
+        value : string;
+end;
+
 type encryptionKey = array [1..26] of char;
 type letterFrequency = array [1..27] of integer; //27 - number of letters (not counting spaces etc.)
 type candidateArray = array [1..9] of char;
@@ -31,7 +36,9 @@ const DEFAULT_BAR = 20;
 
 var eKey : encryptionKey = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
 var rankedLetter : candidateArray = ('e','t','a','o','i','n','s','h','r');
-var frequencies : encryptionKey = ('a', 'i', 'e', 't', 's', 'h', 'o', 'n', 'r', 'd', 'l', 'm', 'y', 'c', 'b', 'f', 'p', 'w', 'g', 'u', 'v', 'k', 'j', 'x', 'q', 'z');
+var frequencies : encryptionKey = ('a', 'i', 't', 'e', 'n', 's', 'h', 'd', 'o', 'r', 'l', 'y', 'f', 'g', 'm', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //('a', 'i', 'e', 't', 's', 'h', 'o', 'n', 'r', 'd', 'l', 'm', 'y', 'c', 'b', 'f', 'p', 'w', 'g', 'u', 'v', 'k', 'j', 'x', 'q', 'z');
+var trigramFreq : array[1..3] of real = (3.508,1.593,1.147);
+var bigramFreq : array[1..20] of real = (3.88,3.68,2.28,2.17,2.14,1.75,1.57,1.41,1.38,1.33,1.28,1.27,1.27,1.17,1.15,1.13,1.11,1.10,1.10,1.05);
 var currentPerm : permutation; // = (1,9,5,20,19,8,15,14,18,4,12,13,25,3,2,6,16,23,7,21,22,11,10,24,17,26);
 var mPerm : permutation; // = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26);
 var letters, bLetters, eLetters, aLetters : letterFrequency;
@@ -44,6 +51,14 @@ var numberOfWords : integer;
 var candidateKey : encryptionKey;
 var countedFrequences : array [1..26] of freq;
 var triedPerms : longint;
+var differentBigrams : array [1..5000] of bigram;
+var differentTrigrams : array [1..5000] of bigram;
+var currentNumberOfBigrams : integer;
+var currentNumberOfTrigrams : integer;
+var doubles : array [1..7] of string;
+var topDoublesTotal : integer;
+var topBigramsTotal : integer;
+var topTrigramsTotal : integer;
 
 function invertPermutation(perm : permutation) : permutation;
 var newPerm : permutation;
@@ -92,63 +107,145 @@ begin
     encryptString := encryptedS;
 end;
 
-procedure setLetterFrequency(var let : letterFrequency; var bLet : letterFrequency; var eLet : letterFrequency; var aLet : letterFrequency; s : string);
-var i, index, l : longint;
-var c : char;
+function alreadyInBigrams(s : string) : integer;
+var i : integer;
 begin
-    l := length(s);
-    for i:=1 to l do
+     i := -1;
+     repeat
+         i := i+1;
+     until (differentBigrams[i].value = s) or (i = currentNumberOfBigrams);
+     if(i = currentNumberOfBigrams) then alreadyInBigrams := 0
+     else alreadyInBigrams := i;
+end;
+
+function alreadyInTrigrams(s : string) : integer;
+var i : integer;
+begin
+     i := -1;
+     repeat
+         i := i+1;
+     until (differentTrigrams[i].value = s) or (i = currentNumberOfTrigrams);
+     if(i = currentNumberOfTrigrams) then alreadyInTrigrams := 0
+     else alreadyInTrigrams := i;
+end;
+
+procedure setLetterFrequency(var let : letterFrequency; var bLet : letterFrequency; var eLet : letterFrequency; var aLet : letterFrequency; s : string);
+var i, index, delka : longint;
+var resp, min, j : integer;
+var tempBigram, tempTrigram : string;
+var c : char;
+var tempB : bigram;
+begin
+    delka := length(s);
+    currentNumberOfBigrams := 0;
+    tempBigram := LowerCase(s[1]);
+    tempTrigram := '';
+    for i:=1 to delka do
     begin
         c := LowerCase(s[i]);
         index := ord(c) - ord('a') + 1;
         if((index > 0) and (index < 27)) then
         begin
+            if(length(tempBigram) = 1) then
+            begin
+                 tempBigram := tempBigram + c;
+                 resp := alreadyInBigrams(tempBigram);
+                 if((resp = 0) and (currentNumberOfBigrams < 5000)) then
+                 begin
+                      currentNumberOfBigrams := currentNumberOfBigrams + 1;
+                      differentBigrams[currentNumberOfBigrams].value := tempBigram;
+                      differentBigrams[currentNumberOfBigrams].count := 1;
+                 end
+                 else differentBigrams[resp].count := differentBigrams[resp].count + 1;
+            end
+            else tempBigram := c;
+
+            if(length(tempTrigram) = 2) then
+            begin
+                 tempTrigram := tempTrigram + c;
+                 resp := alreadyInTrigrams(tempTrigram);
+                 if((resp = 0) and (currentNumberOfTrigrams < 5000)) then
+                 begin
+                      currentNumberOfTrigrams := currentNumberOfTrigrams + 1;
+                      differentTrigrams[currentNumberOfTrigrams].value := tempTrigram;
+                      differentTrigrams[currentNumberOfTrigrams].count := 1;
+                 end
+                 else differentTrigrams[resp].count := differentTrigrams[resp].count + 1;
+
+                 tempTrigram := '';
+            end
+            else tempTrigram := tempTrigram + c;
+
             let[index] := let[index] + 1;
             let[27] := let[27] + 1;
             if((i > 1) and (s[i-1] = ' ')) then
             begin
-                bLet[index] := bLet[index] + 1;
+                bLet[index] := bLet[index] + 1; //pocatecni pismena slov
                 bLet[27] := bLet[27] + 1;
-                if((i+1 <= l) and (s[i+1] = ' ')) then
+                if((i+1 <= delka) and (s[i+1] = ' ')) then
                 begin
-                    aLet[index] := aLet[index] + 1;
+                    aLet[index] := aLet[index] + 1; //jednopisemnova slova
                     aLet[27] := aLet[27] + 1;
                 end;
             end
-            else if((i+1 <= l) and (s[i+1] = ' ')) then
+            else if((i+1 <= delka) and (s[i+1] = ' ')) then
             begin
-                eLet[index] := eLet[index] + 1;
+                eLet[index] := eLet[index] + 1; //koncici pismena
                 eLet[27] := eLet[27] + 1;
+                if(length(tempBigram) = 1) then tempBigram := '';
+                if(length(tempTrigram) = 2) then tempTrigram := ''
             end;
 
         end;
     end;
-end;
-
-function getCandidates(var let : letterFrequency) : candidateArray;
-var i : byte;
-var numberOfCandidates : byte;
-var bar, upBar : real;
-var output : candidateArray;
-begin
-    numberOfCandidates := 0;
-    bar := DEFAULT_BAR;
-    while(numberOfCandidates < 5) do
+    for i := 0 to currentNumberOfBigrams-1 do
     begin
-        if bar <> DEFAULT_BAR then upBar := bar + 0.5
-        else upBar := 100;
-        for i:=1 to 26 do
-        begin
-            if((100*let[i]/let[27] >= bar) and (100*let[i]/let[27] < upBar)) then
-            begin
-                writeln(numberOfCandidates + 1, ' ', chr(i + ord('a') - 1), ' ', 100*let[i]/let[27]:3:0);
-                numberOfCandidates := numberOfCandidates + 1;
-                output[numberOfCandidates] := chr(i + ord('a') - 1);
-            end;
-        end;
-        bar := bar - 0.5;
+       min := i+1;
+       for j:=(1+i) to currentNumberOfBigrams do if(differentBigrams[j].count > differentBigrams[min].count) then min := j;
+       tempB := differentBigrams[i+1];
+       differentBigrams[i+1] := differentBigrams[min];
+       differentBigrams[min] := tempB;
     end;
-    getCandidates := output;
+    topBigramsTotal := 0;
+    for i := 1 to 20 do
+    begin
+        writeln(differentBigrams[i].value, ' #', differentBigrams[i].count);
+        topBigramsTotal := topBigramsTotal + differentBigrams[i].count*2;
+    end;
+
+    writeln();
+    writeln('doubles');
+    i := 1;
+    j := 0;
+    topDoublesTotal := 0;
+    repeat
+          if(differentBigrams[i].value[1] = differentBigrams[i].value[2]) then
+          begin
+               writeln(differentBigrams[i].value, ' #', differentBigrams[i].count);
+               j := j+1;
+               doubles[j] := differentBigrams[i].value;
+               topDoublesTotal := topDoublesTotal + differentBigrams[i].count;
+          end;
+          i := i +1;
+    until (j = 50) or (i = currentNumberOfBigrams);
+
+    for i := 0 to currentNumberOfTrigrams-1 do
+    begin
+       min := i+1;
+       for j:=(1+i) to currentNumberOfTrigrams do if(differentTrigrams[j].count > differentTrigrams[min].count) then min := j;
+       tempB := differentTrigrams[i+1];
+       differentTrigrams[i+1] := differentTrigrams[min];
+       differentTrigrams[min] := tempB;
+    end;
+    writeln();
+    writeln('trigrams');
+    topTrigramsTotal := 0;
+    for i := 1 to 3 do
+    begin
+       topTrigramsTotal := topTrigramsTotal + differentTrigrams[i].count*3;
+       writeln(differentTrigrams[i].value, ' #', differentTrigrams[i].count);
+    end;
+
 end;
 
 function getSub(c : char; key : encryptionKey) : char;
@@ -226,21 +323,7 @@ begin
         perm[i + 22].value := perm[pos].value;
         perm[pos].value := temp;
      end;
-     {
-     writeln();
-     writeln('pred');
-     for i:=1 to 26 do
-     begin
-        write(defaultPerm[i].value, '(', defaultPerm[i].index, ') ');
-     end;
-     defaultPerm := permutePerm(defaultPerm, perm);
-     writeln();
-     writeln('pred');
-     for i:=1 to 26 do
-     begin
-        write(defaultPerm[i].value, '(', defaultPerm[i].index, ') ');
-     end;
-      }
+
      for i := 1 to 26 do
      begin
          currentPerm[ord(countedFrequences[i].letter) - ord('a') + 1].value := defaultPerm[i].value;
@@ -255,18 +338,37 @@ var i, j, min : byte;
 var key : encryptionKey = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
 var temp : real;
 var tempF : freq;
+var letterCount : integer;
 begin
     for i:=1 to 26 do
     begin
         temp := (100*let[i] / let[27]);
-        temp := temp + sqrt(100*bLet[i] / bLet[27]);
-        temp := temp + sqrt((100*eLet[i] / eLet[27])*0.25);
+        temp := temp + 100*bLet[i] / bLet[27];
+        temp := temp + (100*eLet[i] / eLet[27])*5;
         if(aLet[27] = 0) then aLet[27] := 1;
-        temp := temp + (100*aLet[i] / aLet[27]);
+        temp := temp + (100*aLet[i] / aLet[27])*10;
         countedFrequences[i].perc := temp;
         countedFrequences[i].letter := chr(ord('a') + i - 1);
         countedFrequences[i].eLetter := getSub(countedFrequences[i].letter, eKey);
+        letterCount := 0;
+        for j := 1 to 3 do
+        begin
+             if((ord(differentTrigrams[j].value[1])-ord('a')+1) = i) then letterCount := letterCount + differentTrigrams[j].count;
+             if((ord(differentTrigrams[j].value[2])-ord('a')+1) = i) then letterCount := letterCount + differentTrigrams[j].count;
+             if((ord(differentTrigrams[j].value[3])-ord('a')+1) = i) then letterCount := letterCount + differentTrigrams[j].count;
+        end;
+        countedFrequences[i].perc := countedFrequences[i].perc + (100*letterCount/topTrigramsTotal)*3;
+        letterCount := 0;
+        for j := 1 to 20 do
+        begin
+             if((ord(differentBigrams[j].value[1])-ord('a')+1) = i) then letterCount := letterCount + differentBigrams[j].count;
+             if((ord(differentBigrams[j].value[2])-ord('a')+1) = i) then letterCount := letterCount + differentBigrams[j].count;
+        end;
+        countedFrequences[i].perc := countedFrequences[i].perc + (100*letterCount/topBigramsTotal)*2;
     end;
+
+
+
     for i := 0 to 25 do
     begin
        min := i+1;
@@ -277,7 +379,7 @@ begin
     end;
     for i := 1 to 26 do
     begin
-         writeln('#', i, ' ', countedFrequences[i].letter, '(', countedFrequences[i].eLetter ,') ', countedFrequences[i].perc:5:2, ' %');
+         writeln('#', i:2, ' ', countedFrequences[i].letter, ' guess(', frequencies[i], ') real(', countedFrequences[i].eLetter ,') ', countedFrequences[i].perc:5:2, ' %');
          candidateKey[i] := countedFrequences[i].letter;
          currentPerm[ord(countedFrequences[i].letter) - ord('a') + 1].value := ord(frequencies[i]) - ord('a') + 1;
          currentPerm[ord(countedFrequences[i].letter) - ord('a') + 1].index := i;     //currentPerm - 1. permutace kterou chci použít na dešifrování, poté se bude měnit pokud neuspěje
@@ -290,8 +392,8 @@ var temp : string;
 var c : char;
 var i : longint;
 begin
-        //assign(f, 'slova.txt');
-        //rewrite(f);
+        assign(f, 'slova.txt');
+        rewrite(f);
         temp := '';
         numberOfWords := 0;
         for i:=1 to length(s) do
@@ -304,12 +406,12 @@ begin
                         begin
                             numberOfWords := numberOfWords + 1;
                             encryptedWords[numberOfWords] := temp;
-                            //writeln(f, temp);
+                            writeln(f, temp);
                         end;
                         temp := '';
                 end;
         end;
-        //close(f);
+        close(f);
 end;
 
 procedure loadMostWords();
@@ -445,10 +547,11 @@ begin
         end;
 end;
 
-procedure crack(encryptedString : string);
+procedure crack();
 var fitness : byte;
 var lastPerm : permutation;
 var s : string;
+var triedPerms : longint;
 begin
 
     writeln('KEY(Permutation):');
@@ -456,23 +559,22 @@ begin
     for i:=1 to 26 do write(currentPerm[i].value, ' ');
     writeln();
     fitness := 0;
-    while fitness < 40 do
+    while fitness < 20 do
     begin
        lastPerm := currentPerm;
-       s := decryptString(encryptedString, lastPerm);
-       saveWords(s);
-       //setDecryptedWords(lastPerm);
+       //s := decryptString(encryptedString, lastPerm);
+       //saveWords(s);               od 1/10 zhruba pomalejší
+       setDecryptedWords(lastPerm);
        fitness := getNumberOfGoodWords(encryptedWords, false);
        setNewPerm();
-       //triedPerms := triedPerms + 1;
-       writeln(triedPerms);
+       //writeln(triedPerms);
     end;
     writeln('KEY ', fitness);
 
     for i:=1 to 26 do write(lastPerm[i].value, ' ');
 
     writeln();
-    writeln(s);
+    //for i:=1 to 100 do writeln(decryptedWords[i]);
 end;
 
 begin
@@ -497,7 +599,7 @@ begin
     writeln();
     writeln();
     //writeln(decryptString(encryptedSs, invertPermutation(mPerm)));
-    saveWords(ss);
+    saveWords(encryptedSs);
 
     loadMostWords();
     sortMostWords(mostWords, 1, length(mostWords));
@@ -517,6 +619,5 @@ begin
     writeln();
     for i:=1 to 26 do write(mPerm[i].value, ' ');
     writeln();
-    crack(encryptedSs);
-   // getCandidates(letters);
+    //crack();
 end.
