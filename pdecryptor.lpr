@@ -1,17 +1,10 @@
 program pdecryptor;
-{$H+}
+{$H+} //pro moznost pouziti neomezene dlouhych stringu
 
-Uses sysutils, strutils;
-
-type freq = record
+type freq = record  //record pro ulozeni pravdepodobnosti pismena
         perc : real;
         letter : char;
         eLetter : char
-end;
-
-type usedWord = record
-        value : string;
-        pos : longint
 end;
 
 type permItem = record
@@ -20,46 +13,33 @@ type permItem = record
 
 end;
 
-type bigram = record
+type bigram = record //record pro pocet dvojici/trojici
         count : integer;
         value : string;
 end;
 
-type encryptionKey = array [1..26] of char;
+type alphabet = array [1..26] of char;
 type letterFrequency = array [1..27] of integer; //27 - number of letters (not counting spaces etc.)
-type candidateArray = array [1..9] of char;
-type words = array [1..5000] of usedWord;
 type wordsArray = array[1..5000] of string;
 type permutation = array[1..26] of permItem;
 
-const DEFAULT_BAR = 20;
+const DESIRED_FITNESS = 20;
 
-var eKey : encryptionKey = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
-var rankedLetter : candidateArray = ('e','t','a','o','i','n','s','h','r');
-var frequencies : encryptionKey = ('a', 'i', 't', 'e', 'h', 'n', 's', 'd', 'o', 'r', 'g', 'l', 'f', 'm', 'y', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //('a', 'i', 'e', 't', 's', 'h', 'o', 'n', 'r', 'd', 'l', 'm', 'y', 'c', 'b', 'f', 'p', 'w', 'g', 'u', 'v', 'k', 'j', 'x', 'q', 'z');
-var trigramFreq : array[1..3] of real = (3.508,1.593,1.147);
-var bigramFreq : array[1..20] of real = (3.88,3.68,2.28,2.17,2.14,1.75,1.57,1.41,1.38,1.33,1.28,1.27,1.27,1.17,1.15,1.13,1.11,1.10,1.10,1.05);
-var currentPerm : permutation; // = (1,9,5,20,19,8,15,14,18,4,12,13,25,3,2,6,16,23,7,21,22,11,10,24,17,26);
-var mPerm : permutation; // = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26);
+var eKey : alphabet = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
+var alphabetFreq: alphabet = ('a', 'i', 't', 'e', 'h', 'n', 's', 'd', 'o', 'r', 'g', 'l', 'f', 'm', 'y', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //od nejpravdepodobnejsiho
+var currentPerm, enPerm : permutation;
 var letters, bLetters, eLetters, aLetters : letterFrequency;
-var i : longint;
+var i : byte;
 var ss, encryptedSs : string;
 var readF, writeF : text;
-var mostWords : words;
-var encryptedWords, decryptedWords : wordsArray;
-var numberOfWords : integer;
-var countedFrequences : array [1..26] of freq;
-var triedPerms : longint;
-var differentBigrams : array [1..5000] of bigram;
-var differentTrigrams : array [1..5000] of bigram;
-var currentNumberOfBigrams : integer;
-var currentNumberOfTrigrams : integer;
-var doubles : array [1..50] of string;
-var topDoublesTotal : integer;
-var topBigramsTotal : integer;
-var topTrigramsTotal : integer;
+var mostWords, encryptedWords, decryptedWords : wordsArray;
+var numberOfWords, topDoublesTotal, topBigramsTotal, topTrigramsTotal, currentNumberOfBigrams, currentNumberOfTrigrams : integer;
+var countedFrequences : array [1..26] of freq; //pole kde je ulozeno skore pro kazde pismeno
+var triedPerms : longint; //pocet vyzkousenych permutaci
+var differentBigrams, differentTrigrams : array [1..5000] of bigram;
+var doubles : array [1..50] of string; //pole pro dvojice stejnych pismen
 
-function invertPermutation(perm : permutation) : permutation;
+function invertPermutation(perm : permutation) : permutation; //vrati inverzni permutaci
 var newPerm : permutation;
 begin
     for i := 1 to length(perm) do
@@ -69,25 +49,24 @@ begin
     invertPermutation := newPerm;
 end;
 
-procedure generateKey(var key : encryptionKey);
+procedure generateKey(var key : alphabet); //vygeneruje klic k zasifrovani + ulozi jeho permutaci cisel
 var i, newPos, tempM : byte;
 var temp : char;
 begin
-    Randomize;
-    for i:=1 to 26 do mPerm[i].value := i;
+    for i:=1 to 26 do enPerm[i].value := i;
     for i:=1 to 26 do
     begin
         newPos := ((i + Random(26)+1) mod 26) + 1;
         temp := key[newPos];
-        tempM := mPerm[newPos].value;
+        tempM := enPerm[newPos].value;
         key[newPos] := key[i];
-        mPerm[newPos].value := mPerm[i].value;
+        enPerm[newPos].value := enPerm[i].value;
         key[i] := temp;
-        mPerm[i].value := tempM;
+        enPerm[i].value := tempM;
     end;
 end;
 
-function encryptString(s : string; key : encryptionKey) : string;
+function encryptString(s : string; key : alphabet) : string; //funkce pro zasifrovani textu podle vygenerovaného klice
 var i, index : longint;
 var c : char;
 var encryptedS : string;
@@ -105,7 +84,8 @@ begin
     end;
     encryptString := encryptedS;
 end;
-
+{funkce zjisti jestli uz dvojice je ulozena, jestli ano tak vypise pozici v poli
+jestli ne tak 0}
 function alreadyInBigrams(s : string) : integer;
 var i : integer;
 begin
@@ -116,8 +96,8 @@ begin
      if(i = currentNumberOfBigrams) then alreadyInBigrams := 0
      else alreadyInBigrams := i;
 end;
-{
-/funkce zjisti jestli uz trojce je ulozena, jestli ano tak vypise pozici }
+{funkce zjisti jestli uz trojice je ulozena, jestli ano tak vypise pozici v poli
+jestli ne tak 0}
 function alreadyInTrigrams(s : string) : integer;
 var i : integer;
 begin
@@ -279,7 +259,7 @@ begin
 
 end;
 
-function getSub(c : char; key : encryptionKey) : char; //pomocna funkce pro zjisteni jake pismeno bylo zasifrovano kterym (pro kontrolu)
+function getSub(c : char; key : alphabet) : char; //pomocna funkce pro zjisteni jake pismeno bylo zasifrovano kterym (pro kontrolu)
 var i : byte;
 begin
         i := 1;
@@ -306,7 +286,7 @@ var defaultPerm : permutation;
 begin
      for i:= 1 to 26 do
      begin
-        defaultPerm[i].value := ord(frequencies[i]) - ord('a') + 1; //permutace na zaklade frekvence
+        defaultPerm[i].value := ord(alphabetFreq[i]) - ord('a') + 1; //permutace na zaklade frekvence
         defaultPerm[i].index := i;
         perm[i].value := i; //obycejna permutace od 1 do 26;
      end;
@@ -358,7 +338,7 @@ end;
 metoda udeli kazdemu pismenu skore na zaklade pravdepodobnosti a pote to porovna
 s polem frequencies kde jsou dana pismena podle pravdepodobnosti
 }
-procedure sumUpFrequencies(var let, bLet, eLet, aLet : letterFrequency; var eKey : encryptionKey);
+procedure sumUpFrequencies(var let, bLet, eLet, aLet : letterFrequency; var eKey : alphabet);
 var i, j, min : byte;
 var temp : real;
 var tempF : freq;
@@ -404,8 +384,8 @@ begin
     end;
     for i := 1 to 26 do  //vypis odhadu
     begin
-         writeln('#', i:2, ' ', countedFrequences[i].letter, ' = odhad(', frequencies[i], ') opravdu(', countedFrequences[i].eLetter ,') ', countedFrequences[i].perc:5:2);
-         currentPerm[ord(countedFrequences[i].letter) - ord('a') + 1].value := ord(frequencies[i]) - ord('a') + 1; //vytvori 1. potencialni desifrovaci permutaci
+         writeln('#', i:2, ' ', countedFrequences[i].letter, ' = odhad(', alphabetFreq[i], ') opravdu(', countedFrequences[i].eLetter ,') ', countedFrequences[i].perc:5:2);
+         currentPerm[ord(countedFrequences[i].letter) - ord('a') + 1].value := ord(alphabetFreq[i]) - ord('a') + 1; //vytvori 1. potencialni desifrovaci permutaci
          currentPerm[ord(countedFrequences[i].letter) - ord('a') + 1].index := i; //pismeno na indexu nahradi pismeno value (1-26)
     end;
 end;
@@ -444,8 +424,7 @@ begin
         while not SeekEof(f) do
         begin
             readln(f, temp);
-            mostWords[i].value := temp;
-            mostWords[i].pos := i;
+            mostWords[i] := temp;
             i := i + 1;
         end;
         close(f);
@@ -480,16 +459,16 @@ begin
         end;
 end;
 
-procedure sortMostWords(var ar : words; start, konec : longint); //quicksort lexikograficky nejpouzivanejsich pismen, aby se v nich dalo binarne vyhledavat
-var pivot, temp : usedWord;
+procedure sortMostWords(var ar : wordsArray; start, konec : longint); //quicksort lexikograficky nejpouzivanejsich pismen, aby se v nich dalo binarne vyhledavat
+var pivot, temp : string;
 var s, e : longint; {start end}
 begin
     s := start;
     e := konec;
     pivot := ar[(start + konec) div 2];
     repeat
-        while lexComp(pivot.value, ar[s].value) do s := s + 1;
-        while lexComp(ar[e].value, pivot.value) do e := e - 1;
+        while lexComp(pivot, ar[s]) do s := s + 1;
+        while lexComp(ar[e], pivot) do e := e - 1;
         if(s < e) then
         begin
             temp := ar[s];
@@ -515,14 +494,14 @@ begin
     j := length(mostWords);
     repeat
           k := (i+j) div 2;
-          if(lexComp(s, mostWords[k].value)) then i := k+1
+          if(lexComp(s, mostWords[k])) then i := k+1
           else j := k-1;
-    until (mostWords[k].value = s) or (i > j);
-    if(mostWords[k].value = s) then isInMostWords := true
+    until (mostWords[k] = s) or (i > j);
+    if(mostWords[k] = s) then isInMostWords := true
     else isInMostWords := false;
 end;
 
-function getNumberOfGoodWords(var ar : wordsArray; print : boolean) : integer;  //vrati procento slov z pole "ar" co se nachazeji v mostWords (nejcastejsich 5000)
+function getNumberOfGoodWords(var ar : wordsArray) : integer;  //vrati procento slov z pole "ar" co se nachazeji v mostWords (nejcastejsich 5000)
 var i, output : integer;
 begin
     output := 0;
@@ -566,7 +545,7 @@ begin
         end;
 end;
 
-procedure crack();
+procedure crack();  //hlavni metoda zkousi klice dokud nenalezne ten, ktery desifruje text a aspon 20(DESIRED_FITNESS)% slov je znamych
 var fitness : byte;
 var lastPerm : permutation;
 var s : string;
@@ -576,17 +555,17 @@ begin
     for i:=1 to 26 do write(currentPerm[i].value, ' ');
     writeln();
     fitness := 0;
-    while fitness < 20 do
+    while fitness < DESIRED_FITNESS do
     begin
-       lastPerm := currentPerm;
+       lastPerm := currentPerm; //uloz si starou permutaci (kvuli potencialnimu vypisu dobre permutace)
        //s := decryptString(enS, lastPerm);
        //saveWords(s);              // zhruba 5x pomalejší
        setDecryptedWords(lastPerm);
-       fitness := getNumberOfGoodWords(encryptedWords, false);
-       setNewPerm();
+       fitness := getNumberOfGoodWords(encryptedWords);
+       setNewPerm(); //do currentPerm uloz novou permutaci
        //writeln(triedPerms);
     end;
-    writeln('KEY ', fitness);
+    writeln('mozny klic s presnosti: ', fitness);
 
     for i:=1 to 26 do write(lastPerm[i].value, ' ');
 
@@ -614,7 +593,6 @@ begin
     encryptedSs := encryptString(ss, eKey);
     //writeln(encryptedSs);
     writeln();
-    writeln();
     //writeln(decryptString(encryptedSs, invertPermutation(mPerm)));
     saveWords(encryptedSs);
 
@@ -635,11 +613,11 @@ begin
     sumUpFrequencies(letters, bLetters, eLetters, aLetters, eKey);
     writeln();
     write('permutace (klic z zasifrovani): ' );
-    for i:=1 to 26 do write(mPerm[i].value, ' ');
-    mPerm := invertPermutation(mPerm);
+    for i:=1 to 26 do write(enPerm[i].value, ' ');
+    enPerm := invertPermutation(enPerm);
     writeln();
     write('inverzni permutace (klic k desifrovani): ');
-    for i:=1 to 26 do write(mPerm[i].value, ' ');
+    for i:=1 to 26 do write(enPerm[i].value, ' ');
     writeln();
     crack();
 end.
