@@ -24,7 +24,8 @@ type wordsArray = array[1..5000] of string;
 type permutation = array[1..26] of permItem;
 
 const DESIRED_FITNESS = 20;
-
+var ONLY_DECRYPT : boolean;
+var vstup : string;
 var eKey : alphabet = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
 var alphabetFreq: alphabet = ('a', 'i', 't', 'e', 'h', 'n', 's', 'd', 'o', 'r', 'g', 'l', 'f', 'm', 'y', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //od nejpravdepodobnejsiho
 var currentPerm, enPerm : permutation;
@@ -80,7 +81,7 @@ begin
             if(c = s[i]) then encryptedS := encryptedS + key[index]
             else encryptedS := encryptedS + UpCase(key[index]);
         end
-        else encryptedS := encryptedS +s[i];
+        else encryptedS := encryptedS + s[i];
     end;
     encryptString := encryptedS;
 end;
@@ -279,7 +280,7 @@ begin
 end;
 
 procedure setNewPerm(); //permutuje vytvorene permutace, ale jen jejich jiste casti
-var i, j, pos, temp : byte;
+var i, pos, temp : byte;
 var perm : permutation;
 //var defaultFreq : array [1..26] of byte = (1,9,5,20,19,8,15,14,18,4,12,13,25,3,2,6,16,23,7,21,22,11,10,24,17,26);
 var defaultPerm : permutation;
@@ -536,7 +537,6 @@ implementovano protoze je rychlejsi
 desifrovat mnoho malych stringu oproti jednomu velkemu jednou
 }
 procedure setDecryptedWords(var perm : permutation);
-var c : char;
 var i : longint;
 begin
         for i:=1 to numberOfWords do
@@ -548,11 +548,10 @@ end;
 procedure crack();  //hlavni metoda zkousi klice dokud nenalezne ten, ktery desifruje text a aspon 20(DESIRED_FITNESS)% slov je znamych
 var fitness : byte;
 var lastPerm : permutation;
-var s : string;
 begin
     triedPerms := 0;
-    write('prvni permutace k desifrovani:');
-    for i:=1 to 26 do write(currentPerm[i].value, ' ');
+    write('prvni permutace k desifrovani: ':41);
+    for i:=1 to 26 do write(currentPerm[i].value:2, ' ');
     writeln();
     fitness := 0;
     while fitness < DESIRED_FITNESS do
@@ -573,24 +572,35 @@ begin
 end;
 
 begin
+    writeln('Chcete pouze desifrovat?');
+    readln(vstup);
+    if(vstup = 'ano') then ONLY_DECRYPT := true
+    else ONLY_DECRYPT := false;
     Randomize();
     generateKey(eKey);
     write('klic: ');
     for i:=1 to 26 do write(eKey[i]);
     writeln();
 
-    assign(readF, 'input.txt');
-    assign(writeF, 'output.txt');
+    assign(readF, 'vstup.txt');
+    assign(writeF, 'vystup.txt');
     reset(readF);
     while not eof(readF) do
     begin
         readln(readF, encryptedSs);
         ss := ss + encryptedSs + ' ';
     end;
-
+    close(readF);
     //writeln(ss);
     writeln('delka textu: ', length(ss));
-    encryptedSs := encryptString(ss, eKey);
+    if(not ONLY_DECRYPT) then encryptedSs := encryptString(ss, eKey)
+    else encryptedSs := ss;
+    writeln(length(encryptedSs));
+    if(not ONLY_DECRYPT) then
+    begin
+         rewrite(writeF);
+         writeln(writeF, encryptedSs);
+    end;
     //writeln(encryptedSs);
     writeln();
     //writeln(decryptString(encryptedSs, invertPermutation(mPerm)));
@@ -612,12 +622,12 @@ begin
     writeln('Odhad pismen na zaklade frekvence');
     sumUpFrequencies(letters, bLetters, eLetters, aLetters, eKey);
     writeln();
-    write('permutace (klic z zasifrovani): ' );
-    for i:=1 to 26 do write(enPerm[i].value, ' ');
+    write('permutace (klic z zasifrovani): ':41);
+    for i:=1 to 26 do write(enPerm[i].value:2, ' ');
     enPerm := invertPermutation(enPerm);
     writeln();
-    write('inverzni permutace (klic k desifrovani): ');
-    for i:=1 to 26 do write(enPerm[i].value, ' ');
+    write('inverzni permutace (klic k desifrovani): ':41);
+    for i:=1 to 26 do write(enPerm[i].value:2, ' ');
     writeln();
     crack();
 end.
