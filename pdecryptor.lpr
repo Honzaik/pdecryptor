@@ -560,7 +560,7 @@ begin
        //s := decryptString(enS, lastPerm);
        //saveWords(s);              // zhruba 5x pomalejší
        setDecryptedWords(lastPerm);
-       fitness := getNumberOfGoodWords(encryptedWords);
+       fitness := getNumberOfGoodWords(decryptedWords);
        setNewPerm(); //do currentPerm uloz novou permutaci
        //writeln(triedPerms);
     end;
