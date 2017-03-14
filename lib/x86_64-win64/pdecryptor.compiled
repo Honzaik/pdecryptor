@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <Compiler Value="C:\lazarus\fpc\3.0.2\bin\x86_64-win64\fpc.exe" Date="1247518955"/>
-  <Params Value=" -MObjFPC -Scghi -O1 -g -gl -l -vewnhibq -FiC:\Users\honza\pdecryptor\lib\x86_64-win64 -FuC:\Users\honza\pdecryptor\ -FUC:\Users\honza\pdecryptor\lib\x86_64-win64\ pdecryptor.lpr"/>
+  <Params Value=" -MObjFPC -Scghi -O1 -g -gl -l -vewnhibq -FiC:\Users\honzaik\pdecryptor\lib\x86_64-win64 -FuC:\Users\honzaik\pdecryptor\ -FUC:\Users\honzaik\pdecryptor\lib\x86_64-win64\ pdecryptor.lpr"/>
 </CONFIG>
