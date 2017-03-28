@@ -23,11 +23,15 @@ type letterFrequency = array [1..27] of integer; //27 - number of letters (not c
 type wordsArray = array[1..5000] of string;
 type permutation = array[1..26] of permItem;
 
-const DESIRED_FITNESS = 20;
+const DESIRED_FITNESS = 35;
+const MODE = 4;  //0=pouze celkový, 1=celkovy + konce, 2=starý komplex, 4=dvojice/trojice
 var ONLY_DECRYPT : boolean;
 var vstup : string;
 var eKey : alphabet = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
-var alphabetFreq: alphabet = ('a', 'i', 't', 'e', 'h', 'n', 's', 'd', 'o', 'r', 'g', 'l', 'f', 'm', 'y', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //od nejpravdepodobnejsiho
+//var alphabetFreq: alphabet = ('a', 'i', 't', 'e', 'h', 'n', 's', 'd', 'o', 'r', 'g', 'l', 'f', 'm', 'y', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //dle starého vzorce
+//var alphabetFreq: alphabet = ('a', 'i', 't', 's', 'o', 'n', 'd', 'e', 'r', 'h', 'l', 'y', 'f', 'w', 'm', 'c', 'b', 'p', 'u', 'g', 'v', 'k', 'j', 'q', 'x', 'z'); //ceklova + zac + konce
+//var alphabetFreq: alphabet = ('a', 'i', 'e', 't', 'o', 'n', 's', 'h', 'r', 'd', 'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'); //ceklova
+var alphabetFreq: alphabet = ('i', 'a', 'e', 'h', 't', 'n', 'd', 'r', 'o', 'g', 's', 'u', 'l', 'c', 'm', 'w', 'f', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'); //dvojice/trojice
 var currentPerm, enPerm : permutation;
 var letters, bLetters, eLetters, aLetters : letterFrequency;
 var i : byte;
@@ -291,40 +295,95 @@ begin
         defaultPerm[i].index := i;
         perm[i].value := i; //obycejna permutace od 1 do 26;
      end;
-     for i := 1 to 2 do
+     if(MODE <> 4) then
      begin
-          pos := (Random(2) + i) mod 2 + 1;
-          temp := perm[i].value;
-          perm[i].value := perm[pos].value;
+       for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 1;
+            temp := perm[i].value;
+            perm[i].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+            pos := (Random(4) + i) mod 4 + 3;
+            temp := perm[i + 2].value;
+            perm[i + 2].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 7 do
+       begin
+            pos := (Random(7) + i) mod 7 + 7;
+            temp := perm[i + 6].value;
+            perm[i + 6].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 9 do
+       begin
+            pos := (Random(9) + i) mod 9 + 14;
+            temp := perm[i + 13].value;
+            perm[i + 13].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+          pos := (Random(4) + i) mod 4 + 23;
+          temp := perm[i + 22].value;
+          perm[i + 22].value := perm[pos].value;
           perm[pos].value := temp;
-     end;
-     for i := 1 to 4 do
+       end;
+     end
+     else
      begin
-          pos := (Random(4) + i) mod 4 + 3;
-          temp := perm[i + 2].value;
-          perm[i + 2].value := perm[pos].value;
+         for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 1;
+            temp := perm[i].value;
+            perm[i].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+            pos := (Random(4) + i) mod 3 + 3;
+            temp := perm[i + 2].value;
+            perm[i + 2].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+            pos := (Random(4) + i) mod 4 + 7;
+            temp := perm[i + 6].value;
+            perm[i + 6].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 7 do
+       begin
+            pos := (Random(7) + i) mod 7 + 11;
+            temp := perm[i + 10].value;
+            perm[i + 10].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 3 do
+       begin
+          pos := (Random(3) + i) mod 3 + 18;
+          temp := perm[i + 17].value;
+          perm[i + 17].value := perm[pos].value;
           perm[pos].value := temp;
-     end;
-     for i := 1 to 7 do
-     begin
-          pos := (Random(7) + i) mod 7 + 7;
-          temp := perm[i + 6].value;
-          perm[i + 6].value := perm[pos].value;
+       end;
+       for i := 1 to 2 do
+       begin
+          pos := (Random(3) + i) mod 3 + 21;
+          temp := perm[i + 20].value;
+          perm[i + 20].value := perm[pos].value;
           perm[pos].value := temp;
-     end;
-     for i := 1 to 9 do
-     begin
-          pos := (Random(9) + i) mod 9 + 14;
-          temp := perm[i + 13].value;
-          perm[i + 13].value := perm[pos].value;
+       end;
+       for i := 1 to 4 do
+       begin
+          pos := (Random(4) + i) mod 4 + 23;
+          temp := perm[i + 22].value;
+          perm[i + 22].value := perm[pos].value;
           perm[pos].value := temp;
-     end;
-     for i := 1 to 4 do
-     begin
-        pos := (Random(4) + i) mod 4 + 23;
-        temp := perm[i + 22].value;
-        perm[i + 22].value := perm[pos].value;
-        perm[pos].value := temp;
+       end;
      end;
 
      defaultPerm := permutePerm(defaultPerm, perm); //vytvori novou permutace podle frekvence tim ze pouzije permutaci perm, ktera jen prehazi 1-2 2-6 atd
@@ -344,15 +403,17 @@ var i, j, min : byte;
 var temp : real;
 var tempF : freq;
 var letterCount : integer;
+
 begin
     for i:=1 to 26 do
     begin
+        countedFrequences[i].perc := 0;
         temp := (100*let[i] / let[27]); //procento i-teho pismene v textu
-        temp := temp + 100*bLet[i] / bLet[27]; //procento i-teho pismene na zacatku slov v textu
-        temp := temp + (100*eLet[i] / eLet[27]); //procento i-teho pismene na konci slov v textu
+        if(MODE <> 0) then temp := temp + 100*bLet[i] / bLet[27]; //procento i-teho pismene na zacatku slov v textu
+        if(MODE <> 0) then temp := temp + (100*eLet[i] / eLet[27]); //procento i-teho pismene na konci slov v textu
         if(aLet[27] = 0) then aLet[27] := 1; //jestli nebylo nalezeno zadne jednopismenove slovo prirad ze se nalezlo 1 (kvuli deleni nulou)
         temp := temp + (100*aLet[i] / aLet[27])*10; //zvysi procenta pismenum ktere se nachazeji samotna v textu (a,i) 10x, jelikoz tato 2 jsou jista
-        countedFrequences[i].perc := temp; //zaznamena pro i-te pismeno kolik ma "skore" a
+        if(MODE <> 4) then countedFrequences[i].perc := temp; //zaznamena pro i-te pismeno kolik ma "skore" a
         countedFrequences[i].letter := chr(ord('a') + i - 1); //priradi mu char
         countedFrequences[i].eLetter := getSub(countedFrequences[i].letter, eKey); //a pismeno ktere sifruje
 
@@ -363,14 +424,25 @@ begin
              if((ord(differentTrigrams[j].value[2])-ord('a')+1) = i) then letterCount := letterCount + differentTrigrams[j].count;
              if((ord(differentTrigrams[j].value[3])-ord('a')+1) = i) then letterCount := letterCount + differentTrigrams[j].count;
         end;
-        countedFrequences[i].perc := countedFrequences[i].perc + (100*letterCount/topTrigramsTotal)*3; //priradi dalsi skore na zaklade vyskytu
+        if(MODE = 2) then countedFrequences[i].perc := countedFrequences[i].perc + (100*letterCount/topTrigramsTotal)*3; //priradi dalsi skore na zaklade vyskytu
+        if(MODE = 4) then countedFrequences[i].perc := (100*letterCount/topTrigramsTotal)*10;
         letterCount := 0;
         for j := 1 to 20 do //to same pro dvojice akorat jich pocitame 20
         begin
              if((ord(differentBigrams[j].value[1])-ord('a')+1) = i) then letterCount := letterCount + differentBigrams[j].count;
              if((ord(differentBigrams[j].value[2])-ord('a')+1) = i) then letterCount := letterCount + differentBigrams[j].count;
         end;
-        countedFrequences[i].perc := countedFrequences[i].perc + (100*letterCount/topBigramsTotal)*2; //to same pro dvojice
+        if(MODE = 2) then countedFrequences[i].perc := countedFrequences[i].perc + (100*letterCount/topBigramsTotal)*2; //to same pro dvojice
+        if(MODE = 4) then countedFrequences[i].perc := countedFrequences[i].perc +(100*letterCount/topBigramsTotal)*10;
+
+        if((MODE = 4) and (countedFrequences[i].perc = 0)) then
+        begin
+             countedFrequences[i].perc := countedFrequences[i].perc + (100*let[i] / let[27]); //nejdrive priradi dle dvojic/trojic pote zbytek (mensi nasobek)
+             //writeln(countedFrequences[i].letter, ' ', (100*let[i] / let[27]):4:3);
+        end;
+
+        if(aLet[27] = 0) then aLet[27] := 1; //jestli nebylo nalezeno zadne jednopismenove slovo prirad ze se nalezlo 1 (kvuli deleni nulou)
+        countedFrequences[i].perc := countedFrequences[i].perc + (100*aLet[i] / aLet[27])*10; //zvysi procenta pismenum ktere se nachazeji samotna v textu (a,i) 10x, jelikoz tato 2 jsou jista
     end;
 
 
@@ -560,15 +632,22 @@ begin
        //s := decryptString(enS, lastPerm);
        //saveWords(s);              // zhruba 5x pomalejší
        setDecryptedWords(lastPerm);
-       fitness := getNumberOfGoodWords(encryptedWords);
+       fitness := getNumberOfGoodWords(decryptedWords);
        setNewPerm(); //do currentPerm uloz novou permutaci
        //writeln(triedPerms);
     end;
     writeln('mozny klic s presnosti: ', fitness);
 
-    for i:=1 to 26 do write(lastPerm[i].value, ' ');
+    for i:=1 to 26 do write(lastPerm[i].value:3);
+    writeln();
+    for i:=1 to 26 do write(enPerm[i].value:3);
 
     writeln();
+    rewrite(writeF);
+    for i:=1 to numberOfWords do
+    begin
+           writeln(writeF, decryptedWords[i], ' ', encryptedWords[i]);
+    end;
 end;
 
 begin
