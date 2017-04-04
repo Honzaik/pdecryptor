@@ -24,14 +24,14 @@ type wordsArray = array[1..5000] of string;
 type permutation = array[1..26] of permItem;
 
 const DESIRED_FITNESS = 35;
-const MODE = 4;  //0=pouze celkový, 1=celkovy + konce, 2=starý komplex, 4=dvojice/trojice
+const MODE = 0;  //0=pouze celkový, 1=celkovy + zac + konce, 2=starý komplex, 4=dvojice/trojice
 var ONLY_DECRYPT : boolean;
 var vstup : string;
 var eKey : alphabet = ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
 //var alphabetFreq: alphabet = ('a', 'i', 't', 'e', 'h', 'n', 's', 'd', 'o', 'r', 'g', 'l', 'f', 'm', 'y', 'w', 'u', 'c', 'b', 'p', 'v', 'k', 'j', 'q', 'x', 'z'); //dle starého vzorce
 //var alphabetFreq: alphabet = ('a', 'i', 't', 's', 'o', 'n', 'd', 'e', 'r', 'h', 'l', 'y', 'f', 'w', 'm', 'c', 'b', 'p', 'u', 'g', 'v', 'k', 'j', 'q', 'x', 'z'); //ceklova + zac + konce
-//var alphabetFreq: alphabet = ('a', 'i', 'e', 't', 'o', 'n', 's', 'h', 'r', 'd', 'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'); //ceklova
-var alphabetFreq: alphabet = ('i', 'a', 'e', 'h', 't', 'n', 'd', 'r', 'o', 'g', 's', 'u', 'l', 'c', 'm', 'w', 'f', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'); //dvojice/trojice
+var alphabetFreq: alphabet = ('a', 'i', 'e', 't', 'o', 'n', 's', 'h', 'r', 'd', 'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'); //ceklova
+//var alphabetFreq: alphabet = ('i', 'a', 'e', 'h', 't', 'n', 'd', 'r', 'o', 'g', 's', 'u', 'l', 'c', 'm', 'w', 'f', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'); //dvojice/trojice
 var currentPerm, enPerm : permutation;
 var letters, bLetters, eLetters, aLetters : letterFrequency;
 var i : byte;
@@ -286,7 +286,6 @@ end;
 procedure setNewPerm(); //permutuje vytvorene permutace, ale jen jejich jiste casti
 var i, pos, temp : byte;
 var perm : permutation;
-//var defaultFreq : array [1..26] of byte = (1,9,5,20,19,8,15,14,18,4,12,13,25,3,2,6,16,23,7,21,22,11,10,24,17,26);
 var defaultPerm : permutation;
 begin
      for i:= 1 to 26 do
@@ -295,7 +294,7 @@ begin
         defaultPerm[i].index := i;
         perm[i].value := i; //obycejna permutace od 1 do 26;
      end;
-     if(MODE <> 4) then
+     if(MODE = 2) then
      begin
        for i := 1 to 2 do
        begin
@@ -333,9 +332,9 @@ begin
           perm[pos].value := temp;
        end;
      end
-     else
+     else if (MODE = 4) then
      begin
-         for i := 1 to 2 do
+       for i := 1 to 2 do
        begin
             pos := (Random(2) + i) mod 2 + 1;
             temp := perm[i].value;
@@ -344,7 +343,7 @@ begin
        end;
        for i := 1 to 4 do
        begin
-            pos := (Random(4) + i) mod 3 + 3;
+            pos := (Random(4) + i) mod 4 + 3;
             temp := perm[i + 2].value;
             perm[i + 2].value := perm[pos].value;
             perm[pos].value := temp;
@@ -384,7 +383,126 @@ begin
           perm[i + 22].value := perm[pos].value;
           perm[pos].value := temp;
        end;
+     end
+     else if (MODE = 0) then
+     begin
+       for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 1;
+            temp := perm[i].value;
+            perm[i].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 3 do
+       begin
+            pos := (Random(3) + i) mod 3 + 3;
+            temp := perm[i + 2].value;
+            perm[i + 2].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+            pos := (Random(4) + i) mod 4 + 6;
+            temp := perm[i + 5].value;
+            perm[i + 5].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 10;
+            temp := perm[i + 9].value;
+            perm[i + 9].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 12;
+            temp := perm[i + 11].value;
+            perm[i + 11].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 7 do
+       begin
+          pos := (Random(7) + i) mod 7 + 14;
+          temp := perm[i + 13].value;
+          perm[i + 13].value := perm[pos].value;
+          perm[pos].value := temp;
+       end;
+       for i := 1 to 2 do
+       begin
+          pos := (Random(2) + i) mod 2 + 21;
+          temp := perm[i + 20].value;
+          perm[i + 20].value := perm[pos].value;
+          perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+          pos := (Random(4) + i) mod 4 + 23;
+          temp := perm[i + 22].value;
+          perm[i + 22].value := perm[pos].value;
+          perm[pos].value := temp;
+       end;
+     end
+     else   //MODE = 1
+     begin
+       for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 1;
+            temp := perm[i].value;
+            perm[i].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 2 do
+       begin
+            pos := (Random(2) + i) mod 2 + 3;
+            temp := perm[i + 2].value;
+            perm[i + 2].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 6 do
+       begin
+            pos := (Random(6) + i) mod 6 + 5;
+            temp := perm[i + 4].value;
+            perm[i + 4].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+            pos := (Random(4) + i) mod 4 + 11;
+            temp := perm[i + 10].value;
+            perm[i + 10].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 3 do
+       begin
+            pos := (Random(3) + i) mod 3 + 15;
+            temp := perm[i + 14].value;
+            perm[i + 14].value := perm[pos].value;
+            perm[pos].value := temp;
+       end;
+       for i := 1 to 3 do
+       begin
+          pos := (Random(3) + i) mod 3 + 18;
+          temp := perm[i + 17].value;
+          perm[i + 17].value := perm[pos].value;
+          perm[pos].value := temp;
+       end;
+       for i := 1 to 2 do
+       begin
+          pos := (Random(2) + i) mod 2 + 21;
+          temp := perm[i + 20].value;
+          perm[i + 20].value := perm[pos].value;
+          perm[pos].value := temp;
+       end;
+       for i := 1 to 4 do
+       begin
+          pos := (Random(4) + i) mod 4 + 23;
+          temp := perm[i + 22].value;
+          perm[i + 22].value := perm[pos].value;
+          perm[pos].value := temp;
+       end;
      end;
+
 
      defaultPerm := permutePerm(defaultPerm, perm); //vytvori novou permutace podle frekvence tim ze pouzije permutaci perm, ktera jen prehazi 1-2 2-6 atd
      for i := 1 to 26 do //v podstate roztridi permutaci od a-z jelikoz do ted byla podle frekvence
@@ -634,7 +752,6 @@ begin
        setDecryptedWords(lastPerm);
        fitness := getNumberOfGoodWords(decryptedWords);
        setNewPerm(); //do currentPerm uloz novou permutaci
-       //writeln(triedPerms);
     end;
     writeln('mozny klic s presnosti: ', fitness);
 

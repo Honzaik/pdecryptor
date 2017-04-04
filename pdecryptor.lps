@@ -9,9 +9,9 @@
         <Filename Value="pdecryptor.lpr"/>
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="615"/>
-        <CursorPos X="36" Y="637"/>
-        <UsageCount Value="54"/>
+        <TopLine Value="19"/>
+        <CursorPos X="15" Y="27"/>
+        <UsageCount Value="60"/>
         <Loaded Value="True"/>
       </Unit0>
     </Units>
